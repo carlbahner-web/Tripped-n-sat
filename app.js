@@ -1,6 +1,6 @@
 const videos = Array.from(document.querySelectorAll(".loop-video"));
 const audios = Array.from(document.querySelectorAll(".loop-audio"));
-const tiles = Array.from(document.querySelectorAll(".tile"));
+const screens = Array.from(document.querySelectorAll(".screen"));
 const toggleBtns = Array.from(document.querySelectorAll(".toggle-btn"));
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
@@ -37,7 +37,8 @@ const bufferPromises = audios.map((a) =>
 
 function setTileState(index, isActive) {
   active[index] = isActive;
-  tiles[index].classList.toggle("active", isActive);
+  screens[index].classList.toggle("active", isActive);
+  toggleBtns[index].classList.toggle("active", isActive);
   const g = gains[index].gain;
   const now = audioCtx.currentTime;
   g.cancelScheduledValues(now);
