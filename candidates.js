@@ -1,6 +1,11 @@
 fetch("media/candidates/manifest.json")
   .then((res) => res.json())
   .then((items) => {
+    if (items.length === 0) {
+      document.querySelector(".candidates").hidden = true;
+      return;
+    }
+
     const grid = document.getElementById("candidate-grid");
     items.forEach(({ file, label }) => {
       const card = document.createElement("figure");

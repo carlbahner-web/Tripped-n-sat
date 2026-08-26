@@ -4,6 +4,7 @@ const screens = Array.from(document.querySelectorAll(".screen"));
 const toggleBtns = Array.from(document.querySelectorAll(".toggle-btn"));
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
+const jumpscareCat = document.getElementById("jumpscare-cat");
 
 const active = [false, false, false, false];
 let started = false;
@@ -44,6 +45,8 @@ function setTileState(index, isActive) {
   g.cancelScheduledValues(now);
   g.setValueAtTime(g.value, now);
   g.linearRampToValueAtTime(isActive ? 1 : 0, now + 0.03);
+
+  jumpscareCat.classList.toggle("active", active.every(Boolean));
 }
 
 async function startSession() {
