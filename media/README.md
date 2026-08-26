@@ -9,23 +9,38 @@
 
 All four audio stems are from "original reels 2" at 100 BPM, converted
 from the original WAVs to MP3 (V2 VBR). Each reports exactly **19.2s**
-in-browser, so they stay phase-locked with each other under the app's
-drift correction.
+in-browser.
+
+## How the audio stays in sync
+
+`app.js` plays the four audio loops through the Web Audio API, not
+through the `<audio>` tags directly (those tags just hold the file
+paths). On Start, all four are decoded into buffers and each is
+scheduled with `AudioBufferSourceNode.start(sameTimestamp)` — Web
+Audio scheduling is sample-accurate, and each buffer's loop point is
+defined against that same audio clock, so all four stay phase-locked
+indefinitely with no runtime correction needed. Toggling a channel
+only ramps its `GainNode` between 0 and 1 (a 30ms fade, to avoid a
+click) — the underlying source node is never paused or restarted.
+
+This is a hard requirement, not just a nice-to-have: an
+HTMLMediaElement's native `.play()`/`loop` gives no guarantee that
+independent elements start or loop in sample-accurate phase with each
+other, which is why the original `.play()`-based approach drifted.
+
+Because playback goes through Web Audio, the page must be served over
+`http://` or `https://` (e.g. `python3 -m http.server`) — `fetch()`
+can't read local files under a `file://` origin in most browsers.
 
 The four videos are short (sub-4s) looping character clips, much
-shorter than the audio loops — that's intentional. `app.js` only
-drift-corrects a video/audio pair when their durations are within
-0.3s of each other, so these just loop freely and independently via
-the native `loop` attribute while their paired audio track keeps its
-own 19.2s cycle. Each video is provided as both `.webm` (VP9, smaller,
-used by Chromium/Firefox) and `.mp4` (H.264, fallback for Safari) via
-`<source>` elements in `index.html` — browsers pick whichever they
-support.
+shorter than the audio loops — that's intentional, and independent of
+the sync above. They just loop freely via the native `loop` attribute
+while their paired audio track keeps its own 19.2s cycle. Each video
+is provided as both `.webm` (VP9, smaller, used by Chromium/Firefox)
+and `.mp4` (H.264, fallback for Safari) via `<source>` elements in
+`index.html` — browsers pick whichever they support.
 
 ## Filenames
 
 Drop replacement loops in here using these exact filenames:
-`loop{1-4}.mp3`, `loop{1-4}.webm`, `loop{1-4}.mp4`. For an audio/video
-pair to stay perfectly synced for its whole runtime, keep them the
-same duration; the periodic drift-correction in `app.js` skips any
-pair whose durations differ by more than 0.3s.
+`loop{1-4}.mp3`, `loop{1-4}.webm`, `loop{1-4}.mp4`.
