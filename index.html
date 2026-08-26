@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tripped 'n Sat — Loop Player</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="start-overlay">
+  <button id="start-btn">▶ Start Session</button>
+  <p>Click to load and sync all four loops (muted &amp; hidden until you activate them).</p>
+</div>
+
+<main class="stage">
+  <div class="tile" data-index="0">
+    <video class="loop-video" data-index="0" src="media/loop1.mp4" muted loop playsinline></video>
+    <audio class="loop-audio" data-index="0" src="media/loop1.mp3" loop></audio>
+    <div class="tile-overlay"></div>
+    <button class="toggle-btn" data-index="0">Loop 1</button>
+  </div>
+
+  <div class="tile" data-index="1">
+    <video class="loop-video" data-index="1" src="media/loop2.mp4" muted loop playsinline></video>
+    <audio class="loop-audio" data-index="1" src="media/loop2.mp3" loop></audio>
+    <div class="tile-overlay"></div>
+    <button class="toggle-btn" data-index="1">Loop 2</button>
+  </div>
+
+  <div class="tile" data-index="2">
+    <video class="loop-video" data-index="2" src="media/loop3.mp4" muted loop playsinline></video>
+    <audio class="loop-audio" data-index="2" src="media/loop3.mp3" loop></audio>
+    <div class="tile-overlay"></div>
+    <button class="toggle-btn" data-index="2">Loop 3</button>
+  </div>
+
+  <div class="tile" data-index="3">
+    <video class="loop-video" data-index="3" src="media/loop4.mp4" muted loop playsinline></video>
+    <audio class="loop-audio" data-index="3" src="media/loop4.mp3" loop></audio>
+    <div class="tile-overlay"></div>
+    <button class="toggle-btn" data-index="3">Loop 4</button>
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
