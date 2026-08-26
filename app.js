@@ -50,30 +50,36 @@ async function startSession() {
   if (started) return;
   started = true;
 
-  await audioCtx.resume();
-  const buffers = await Promise.all(bufferPromises);
+  try {
+    await audioCtx.resume();
+    const buffers = await Promise.all(bufferPromises);
 
-  // Every loop is scheduled to begin at the exact same audio-clock instant.
-  // Web Audio scheduling is sample-accurate, and each loop's end point is
-  // defined against that same clock, so all four stay phase-locked forever
-  // — no periodic re-sync needed, unlike HTMLMediaElement playback/looping,
-  // which gives no such guarantee.
-  const startAt = audioCtx.currentTime + 0.2;
-  buffers.forEach((buffer, i) => {
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-    source.loopEnd = buffer.duration;
-    source.connect(gains[i]);
-    source.start(startAt);
-  });
+    // Every loop is scheduled to begin at the exact same audio-clock
+    // instant. Web Audio scheduling is sample-accurate, and each loop's end
+    // point is defined against that same clock, so all four stay
+    // phase-locked forever — no periodic re-sync needed, unlike
+    // HTMLMediaElement playback/looping, which gives no such guarantee.
+    const startAt = audioCtx.currentTime + 0.2;
+    buffers.forEach((buffer, i) => {
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.loopEnd = buffer.duration;
+      source.connect(gains[i]);
+      source.start(startAt);
+    });
 
-  videos.forEach((v) => {
-    v.currentTime = 0;
-    v.play().catch(() => {});
-  });
+    videos.forEach((v) => {
+      v.currentTime = 0;
+      v.play().catch(() => {});
+    });
 
-  startOverlay.classList.add("hidden");
+    startOverlay.classList.add("hidden");
+  } catch (err) {
+    started = false;
+    console.error("Failed to start session", err);
+    startBtn.textContent = "Retry — playback failed";
+  }
 }
 
 startBtn.addEventListener("click", startSession);
