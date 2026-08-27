@@ -3,66 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tripped 'n Sat — Loop Player</title>
+<title>Tripped 'n Sat — Loop Station</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="start-overlay">
-  <button id="start-btn">▶ Start Session</button>
-  <p>Click to load and sync all four loops (muted &amp; hidden until you activate them).</p>
+  <button id="start-btn">[ Start Session ]</button>
+  <p>Brings all four in sync — muted and idle until you bring each one in. Toggling never restarts a loop.</p>
 </div>
+
+<header class="brand">
+  <h1>Tripped N Sat</h1>
+  <p class="brand-sub">Loop Station</p>
+</header>
 
 <main class="stage">
   <div class="video-row">
-    <div class="screen" data-index="0">
-      <video class="loop-video" data-index="0" muted loop playsinline>
-        <source src="media/loop1.webm" type="video/webm">
-        <source src="media/loop1.mp4" type="video/mp4">
+    <div class="screen" data-index="0" data-channel="drums">
+      <video class="loop-video off-video" data-index="0" muted loop playsinline>
+        <source src="media/drums-off.webm" type="video/webm">
+        <source src="media/drums-off.mp4" type="video/mp4">
+      </video>
+      <video class="loop-video on-video" data-index="0" muted loop playsinline>
+        <source src="media/drums-on.webm" type="video/webm">
+        <source src="media/drums-on.mp4" type="video/mp4">
       </video>
     </div>
-    <div class="screen" data-index="1">
-      <video class="loop-video" data-index="1" muted loop playsinline>
-        <source src="media/loop2.webm" type="video/webm">
-        <source src="media/loop2.mp4" type="video/mp4">
+    <div class="screen" data-index="1" data-channel="guitars">
+      <video class="loop-video off-video" data-index="1" muted loop playsinline>
+        <source src="media/guitars-off.webm" type="video/webm">
+        <source src="media/guitars-off.mp4" type="video/mp4">
+      </video>
+      <video class="loop-video on-video" data-index="1" muted loop playsinline>
+        <source src="media/guitars-on.webm" type="video/webm">
+        <source src="media/guitars-on.mp4" type="video/mp4">
       </video>
     </div>
-    <div class="screen" data-index="2">
-      <video class="loop-video" data-index="2" muted loop playsinline>
-        <source src="media/loop3.webm" type="video/webm">
-        <source src="media/loop3.mp4" type="video/mp4">
+    <div class="screen" data-index="2" data-channel="bass">
+      <video class="loop-video off-video" data-index="2" muted loop playsinline>
+        <source src="media/bass-off.webm" type="video/webm">
+        <source src="media/bass-off.mp4" type="video/mp4">
+      </video>
+      <video class="loop-video on-video" data-index="2" muted loop playsinline>
+        <source src="media/bass-on.webm" type="video/webm">
+        <source src="media/bass-on.mp4" type="video/mp4">
       </video>
     </div>
-    <div class="screen" data-index="3">
-      <video class="loop-video" data-index="3" muted loop playsinline>
-        <source src="media/loop4.webm" type="video/webm">
-        <source src="media/loop4.mp4" type="video/mp4">
+    <div class="screen" data-index="3" data-channel="synths">
+      <video class="loop-video off-video" data-index="3" muted loop playsinline>
+        <source src="media/synths-off.webm" type="video/webm">
+        <source src="media/synths-off.mp4" type="video/mp4">
+      </video>
+      <video class="loop-video on-video" data-index="3" muted loop playsinline>
+        <source src="media/synths-on.webm" type="video/webm">
+        <source src="media/synths-on.mp4" type="video/mp4">
       </video>
     </div>
   </div>
 
   <div class="button-row">
-    <button class="toggle-btn" data-index="0">Drums</button>
-    <button class="toggle-btn" data-index="1">Vinyl Cut</button>
-    <button class="toggle-btn" data-index="2">Organ</button>
-    <button class="toggle-btn" data-index="3">Pandeiro</button>
+    <button class="toggle-btn" data-index="0" data-channel="drums">[ Drums ]</button>
+    <button class="toggle-btn" data-index="1" data-channel="guitars">[ Guitars ]</button>
+    <button class="toggle-btn" data-index="2" data-channel="bass">[ Bass ]</button>
+    <button class="toggle-btn" data-index="3" data-channel="synths">[ Synths ]</button>
   </div>
 
-  <audio class="loop-audio" data-index="0" src="media/loop1.mp3"></audio>
-  <audio class="loop-audio" data-index="1" src="media/loop2.mp3"></audio>
-  <audio class="loop-audio" data-index="2" src="media/loop3.mp3"></audio>
-  <audio class="loop-audio" data-index="3" src="media/loop4.mp3"></audio>
+  <audio class="loop-audio" data-index="0" src="media/drums.mp3"></audio>
+  <audio class="loop-audio" data-index="1" src="media/guitars.mp3"></audio>
+  <audio class="loop-audio" data-index="2" src="media/bass.mp3"></audio>
+  <audio class="loop-audio" data-index="3" src="media/synths.mp3"></audio>
 </main>
 
 <img id="jumpscare-cat" src="media/candidates/cat-icon.gif" alt="" aria-hidden="true">
 
-<section class="candidates">
-  <h2>Candidate Assets</h2>
-  <p class="candidates-note">Not wired into the player yet — just parked here for review.</p>
-  <div class="candidate-grid" id="candidate-grid"></div>
-</section>
-
 <script src="app.js"></script>
-<script src="candidates.js"></script>
 </body>
 </html>

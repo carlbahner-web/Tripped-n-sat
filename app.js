@@ -81,7 +81,7 @@ async function startSession() {
   } catch (err) {
     started = false;
     console.error("Failed to start session", err);
-    startBtn.textContent = "Retry — playback failed";
+    startBtn.textContent = "[ Retry — Playback Failed ]";
   }
 }
 
