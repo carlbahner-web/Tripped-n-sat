@@ -25,6 +25,10 @@
 <main class="stage">
   <div class="video-row">
     <div class="channel" data-channel="drums">
+      <div class="fader">
+        <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+               data-index="0" aria-label="Drums volume" aria-orientation="vertical">
+      </div>
       <button class="screen" type="button" data-index="0" aria-pressed="false" aria-label="Drums">
       <video class="loop-video off-video" data-index="0" muted loop playsinline>
         <source src="media/drums-off.webm" type="video/webm">
@@ -35,10 +39,12 @@
         <source src="media/drums-on.mp4" type="video/mp4">
       </video>
     </button>
-      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
-             data-index="0" aria-label="Drums volume">
     </div>
     <div class="channel" data-channel="guitars">
+      <div class="fader">
+        <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+               data-index="1" aria-label="Guitars volume" aria-orientation="vertical">
+      </div>
       <button class="screen" type="button" data-index="1" aria-pressed="false" aria-label="Guitars">
       <video class="loop-video off-video" data-index="1" muted loop playsinline>
         <source src="media/guitars-off.webm" type="video/webm">
@@ -49,10 +55,12 @@
         <source src="media/guitars-on.mp4" type="video/mp4">
       </video>
     </button>
-      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
-             data-index="1" aria-label="Guitars volume">
     </div>
     <div class="channel" data-channel="bass">
+      <div class="fader">
+        <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+               data-index="2" aria-label="Bass volume" aria-orientation="vertical">
+      </div>
       <button class="screen" type="button" data-index="2" aria-pressed="false" aria-label="Bass">
       <video class="loop-video off-video" data-index="2" muted loop playsinline>
         <source src="media/bass-off.webm" type="video/webm">
@@ -63,10 +71,12 @@
         <source src="media/bass-on.mp4" type="video/mp4">
       </video>
     </button>
-      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
-             data-index="2" aria-label="Bass volume">
     </div>
     <div class="channel" data-channel="synths">
+      <div class="fader">
+        <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+               data-index="3" aria-label="Synths volume" aria-orientation="vertical">
+      </div>
       <button class="screen" type="button" data-index="3" aria-pressed="false" aria-label="Synths">
       <video class="loop-video off-video" data-index="3" muted loop playsinline>
         <source src="media/synths-off.webm" type="video/webm">
@@ -77,8 +87,6 @@
         <source src="media/synths-on.mp4" type="video/mp4">
       </video>
     </button>
-      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
-             data-index="3" aria-label="Synths volume">
     </div>
   </div>
 
