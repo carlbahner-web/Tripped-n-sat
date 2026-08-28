@@ -447,6 +447,13 @@ body.all-active .bg-loop {
   pointer-events: none;
 }
 
+/* The off-video is a permanent, always-opaque base layer rather than a
+   second thing that fades — only the on-video's opacity ever moves, in
+   either direction. A true two-sided crossfade (both fading at once)
+   turned out not to be safe: a take briefly has no frame ready right after
+   any seek, even a cheap one, and revealing that gap mid-fade was a black
+   flash. With the off-video always solid underneath, there's nothing left
+   for a gap in the on-video to expose. */
 .on-video {
   opacity: 0;
 }
@@ -455,8 +462,15 @@ body.all-active .bg-loop {
   opacity: 1;
 }
 
-.screen.active .off-video {
-  opacity: 0;
+/* The drums channel's two takes were filmed with the camera nudged very
+   slightly between them: measured against the static background (door
+   frame, wall), the "on" take sits about 1.5px left of the "off" take at
+   its native 640px encode width. Everywhere else the two takes already
+   line up. A small translate (in %, so it scales with the tile rather
+   than a fixed px) nudges it back into place; the slight scale keeps that
+   nudge from ever uncovering an edge. */
+.channel[data-channel="drums"] .on-video {
+  transform: scale(1.01) translateX(0.25%);
 }
 
 /* Which of the three arrangements wins is a function of the viewport's
