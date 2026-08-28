@@ -6,7 +6,6 @@ const screens = Array.from(document.querySelectorAll(".screen"));
 const faders = Array.from(document.querySelectorAll(".volume"));
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
-const jumpscareCat = document.getElementById("jumpscare-cat");
 
 const active = [false, false, false, false];
 // Each channel's own level, independent of whether it is currently in the
@@ -90,8 +89,6 @@ function setTileState(index, isActive) {
   screens[index].classList.toggle("active", isActive);
   screens[index].setAttribute("aria-pressed", String(isActive));
   applyLevel(index);
-
-  jumpscareCat.classList.toggle("active", active.every(Boolean));
 }
 
 // Starts the song. Runs once, on the first channel brought in — every later
