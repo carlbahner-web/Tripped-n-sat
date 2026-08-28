@@ -115,11 +115,18 @@ body {
   padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
+/* Default is 2x2, which is the arrangement that fills a normal landscape
+   screen: a 2x2's tile aspect equals the viewport's own, so on anything
+   near 16/9 the tiles land on 16/9 too and the footage is shown all but
+   uncropped at roughly four times the size a single row allowed. No
+   max-width — the grid is meant to claim the window. */
 .video-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 10px;
-  max-width: 1300px;
+  flex: 1;
+  min-height: 0;
   margin: 0 auto;
   width: 100%;
 }
@@ -130,7 +137,7 @@ body {
   overflow: hidden;
   background: var(--surface);
   border-radius: 20px;
-  aspect-ratio: 16 / 9;
+  min-height: 0;
   box-shadow: 0 0 0 2px var(--surface-line);
   transition: box-shadow 0.15s ease;
   padding: 0;
@@ -157,12 +164,18 @@ body {
   outline-offset: 3px;
 }
 
+/* Wherever a tile isn't exactly 16/9 the trim comes off the top and bottom.
+   The players' heads sit in the upper third and the floor is the least
+   interesting part of the frame, so bias the visible window upward rather
+   than centering it — without this the synth player loses his chin on a
+   portrait tablet. No effect when the tile is already 16/9. */
 .loop-video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 38%;
   transition: opacity 0.2s ease;
   pointer-events: none;
 }
@@ -179,19 +192,17 @@ body {
   opacity: 0;
 }
 
-/* Tall screens (phones upright, portrait tablets) stack into one column of
-   four, each tile taking an equal share of whatever height is left rather
-   than deriving its height from its width — that's the difference between
-   covering ~a quarter of the screen and ~85% of it.
+/* Which of the three arrangements wins is a function of the viewport's
+   aspect ratio R, not its width. Four 16/9 tiles laid into a container of
+   aspect R come out at R/4 each as a single row, R as a 2x2, and R*4 as a
+   column. Setting each equal to 16/9 gives the ideal R for that shape
+   (7.1, 1.78, 0.44), and the geometric means between them give the
+   crossovers used here: stack below 0.89, 2x2 through 3.56, row above.
+   Keying off aspect rather than width is what catches a portrait tablet
+   (~0.69), which a width breakpoint missed and which was covering 8% of
+   its screen. */
 
-   The switch keys off viewport aspect ratio, not width: laying four 16/9
-   tiles into a container of aspect R gives each tile R/4 as a row, R as a
-   2x2, and R*4 as a column. Solving each against 16/9 and taking the
-   geometric-mean crossovers puts the column/2x2 boundary near 0.89, which
-   correctly catches a portrait tablet (~0.69) that a width breakpoint
-   would have missed. Tiles come out wider than 16/9, so object-fit: cover
-   trims the top and bottom of each frame and leaves the subject — who is
-   centered horizontally — intact. */
+/* Tall screens — phones upright, portrait tablets. */
 @media (max-aspect-ratio: 89/100) {
   .stage {
     padding: 8px;
@@ -201,22 +212,24 @@ body {
   .video-row {
     grid-template-columns: 1fr;
     grid-template-rows: repeat(4, 1fr);
-    flex: 1;
-    min-height: 0;
     gap: 6px;
   }
 
   .screen {
-    aspect-ratio: auto;
-    min-height: 0;
     border-radius: 14px;
   }
+}
 
-  /* The trim comes off the top and bottom; the players' heads sit in the
-     upper third and the floor is the least interesting part of the frame,
-     so bias the visible window upward instead of centering it. */
-  .loop-video {
-    object-position: center 38%;
+/* Ultra-wide — the one shape where four across genuinely beats a 2x2,
+   because a 2x2's tiles would be too wide and lose the top and bottom of
+   every frame. Fires at 3.2 rather than the bare 3.56 crossover because a
+   media query measures the viewport while the grid actually gets the
+   stage, which the header and padding leave shorter and therefore wider
+   in aspect (~14% at laptop heights). */
+@media (min-aspect-ratio: 16/5) {
+  .video-row {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
   }
 }
 
