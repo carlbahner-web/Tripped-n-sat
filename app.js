@@ -5,6 +5,7 @@ const audios = Array.from(document.querySelectorAll(".loop-audio"));
 const screens = Array.from(document.querySelectorAll(".screen"));
 const faders = Array.from(document.querySelectorAll(".volume"));
 const channelEls = Array.from(document.querySelectorAll(".channel"));
+const videoRow = document.querySelector(".video-row");
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
 
@@ -193,6 +194,15 @@ function setTileState(index, isActive) {
   screens[index].classList.toggle("active", isActive);
   screens[index].setAttribute("aria-pressed", String(isActive));
   applyLevel(index);
+
+  // The glow is the payoff for bringing in the whole band, not a per-channel
+  // indicator — it stays off at one, two, or three channels and only lights
+  // up once all four are in, replacing the old jump-scare cat for that same
+  // moment. Gated by one class on the shared container rather than each
+  // .screen's own .active state, since with all four active every .screen
+  // is active anyway — this is just the one flag CSS needs to show all four
+  // glows together instead of each tile deciding for itself.
+  videoRow.classList.toggle("all-active", active.every(Boolean));
 }
 
 // Starts the song. Runs once, on the first channel brought in — every later

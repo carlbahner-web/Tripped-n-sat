@@ -251,9 +251,7 @@ body {
 /* The audio-reactive glow. --glow (0-1) is written every frame from the
    channel's own precomputed loudness envelope -- see app.js -- so this
    never animates on a CSS transition, which would just add lag on top of
-   shaping that already happened once, offline, in JS. It's gated purely in
-   CSS off .screen's existing .active class via the sibling selector, so
-   nothing extra needs toggling from script when a channel comes in or out.
+   shaping that already happened once, offline, in JS.
    .screen paints on top (z-index 1) and fully covers .glow's own box, so
    only the part of the shadow bleeding past the shared edge is visible --
    which reads as the tile's own border blooming outward with the music. */
@@ -268,7 +266,13 @@ body {
   transition: opacity 0.15s ease;
 }
 
-.screen.active ~ .glow {
+/* The glow is the payoff for bringing in the whole band, not a per-channel
+   indicator -- replaces the old jump-scare cat for that one moment, so it
+   stays off at one, two, or three channels and only lights up once
+   .video-row carries .all-active (set in app.js whenever every channel is
+   active at once). At that point every .screen is active anyway, so this
+   one class is sufficient to show all four glows together. */
+.video-row.all-active .glow {
   opacity: 1;
 }
 
