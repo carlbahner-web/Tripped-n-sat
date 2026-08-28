@@ -95,6 +95,24 @@ body {
   color: rgba(245, 239, 226, 0.88);
 }
 
+/* Same reasoning as .silent-note below, just surfaced somewhere that's
+   still visible after Start rather than only on the overlay you leave
+   behind — iOS mutes Web Audio outright with the ringer switch flipped,
+   which otherwise looks exactly like a broken page. Touch-only for the
+   same reason: a silent switch is a phone thing. */
+.brand-hint {
+  display: none;
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  color: rgba(245, 239, 226, 0.6);
+}
+
+@media (pointer: coarse) {
+  .brand-hint {
+    display: block;
+  }
+}
+
 #start-overlay {
   position: fixed;
   inset: 0;
@@ -554,6 +572,11 @@ body.all-active .bg-loop {
   .brand-sub {
     font-size: 0.62rem;
     letter-spacing: 0.14em;
+  }
+
+  .brand-hint {
+    margin-top: 6px;
+    font-size: 0.68rem;
   }
 }
 
