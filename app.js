@@ -9,6 +9,13 @@ const jumpscareCat = document.getElementById("jumpscare-cat");
 const active = [false, false, false, false];
 let started = false;
 
+// How far into the future audio playback is scheduled (seconds). Web Audio
+// needs a small lookahead so all four source.start() calls land before the
+// scheduled instant even if the main thread stalls; video playback is
+// deliberately delayed by the same amount (see startSession) so it doesn't
+// start visibly ahead of the audio it's paired with.
+const START_LOOKAHEAD = 0.2;
+
 // Videos are visual only — the audio for each channel is played through
 // Web Audio (below), never through the <audio> tags themselves, so video
 // stays muted permanently and only its visibility toggles.
@@ -62,7 +69,7 @@ async function startSession() {
     // point is defined against that same clock, so all four stay
     // phase-locked forever — no periodic re-sync needed, unlike
     // HTMLMediaElement playback/looping, which gives no such guarantee.
-    const startAt = audioCtx.currentTime + 0.2;
+    const startAt = audioCtx.currentTime + START_LOOKAHEAD;
     buffers.forEach((buffer, i) => {
       const source = audioCtx.createBufferSource();
       source.buffer = buffer;
@@ -72,12 +79,17 @@ async function startSession() {
       source.start(startAt);
     });
 
-    videos.forEach((v) => {
-      v.currentTime = 0;
-      v.play().catch(() => {});
-    });
-
-    startOverlay.classList.add("hidden");
+    // Video has no equivalent "start at this exact future instant" API, so
+    // it's delayed with setTimeout instead — otherwise it would start
+    // immediately while audio is still waiting out its scheduling
+    // lookahead, leaving video visibly ahead of the beat.
+    setTimeout(() => {
+      videos.forEach((v) => {
+        v.currentTime = 0;
+        v.play().catch(() => {});
+      });
+      startOverlay.classList.add("hidden");
+    }, START_LOOKAHEAD * 1000);
   } catch (err) {
     started = false;
     console.error("Failed to start session", err);
