@@ -33,6 +33,10 @@ let loopDuration = 0;
 // are delayed by the same amount so they don't run ahead of the beat.
 const START_LOOKAHEAD = 0.2;
 
+// Target gain for the idle room-tone loop — quiet, a bed for the empty
+// stage rather than something you'd notice on its own.
+const AMBIENT_LEVEL = 0.35;
+
 // Videos are visual only — the audio for each channel is played through
 // Web Audio (below), never through the <video> tags themselves, so video
 // stays muted permanently and only its visibility toggles.
@@ -50,6 +54,15 @@ const gains = audios.map(() => {
   g.connect(audioCtx.destination);
   return g;
 });
+
+// The idle room-tone loop has its own gain node for the same reason each
+// channel does — so bringing it in or out is a ramp, not a click — but it
+// isn't one of the four channels: it plays while none of them are, not
+// while any particular one is.
+const ambientAudio = document.querySelector(".ambient-audio");
+const ambientGain = audioCtx.createGain();
+ambientGain.gain.value = 0;
+ambientGain.connect(audioCtx.destination);
 
 // Served from a file the page fetches; in the self-contained build the loops
 // are inlined as data: URIs instead, where there is no request to make and a
@@ -72,6 +85,10 @@ function loadAudioBytes(src) {
 const bufferPromises = audios.map((a) =>
   loadAudioBytes(a.currentSrc || a.src).then((buf) => audioCtx.decodeAudioData(buf))
 );
+
+const ambientBufferPromise = ambientAudio
+  ? loadAudioBytes(ambientAudio.currentSrc || ambientAudio.src).then((buf) => audioCtx.decodeAudioData(buf))
+  : null;
 
 // --- Audio-reactive glow --------------------------------------------------
 //
@@ -216,6 +233,15 @@ function setTileState(index, isActive) {
     if (allActive) bgLoop.play().catch(() => {});
     else bgLoop.pause();
   }
+
+  // Room tone for the empty stage: audible while no channel is in the mix,
+  // ramped out the moment any one of them is, same as a channel's own gain
+  // and for the same reason — a click-free fade rather than a hard cut.
+  const g = ambientGain.gain;
+  const now = audioCtx.currentTime;
+  g.cancelScheduledValues(now);
+  g.setValueAtTime(g.value, now);
+  g.linearRampToValueAtTime(active.some(Boolean) ? 0 : AMBIENT_LEVEL, now + 0.6);
 }
 
 // Starts the song. Runs once, on the first channel brought in — every later
@@ -254,15 +280,18 @@ async function beginLoops() {
     // counts from the moment it's called, so this line has to run right
     // after scheduling with nothing synchronous between them — envelope
     // computation below waits until after, precisely to avoid delaying it.
-    // The performance takes have been rolling invisibly since Start, so all
-    // that happens here is a seek back to their first frame — they restart
-    // from the top alongside the audio. They are deliberately not started
-    // from a standstill at this moment: calling play() on four idle videos
-    // at once took over a second to produce a frame, which would have left
-    // the picture trailing the downbeat. Seeking four already-running ones
-    // takes about 20ms and never drops readyState.
+    // The performance takes have been rolling invisibly since Start, so
+    // normally this is just a seek back to their first frame — they restart
+    // from the top alongside the audio. reanchorTakes() also re-calls
+    // .play(), which is a no-op on an already-playing take (seeking one
+    // takes about 20ms and never drops readyState) and only actually
+    // matters for the edge case of a take having sat idle long enough to
+    // reach its own end and pause first. Not started from a standstill on
+    // purpose either way: calling play() on four idle videos at once took
+    // over a second to produce a frame, which would have left the picture
+    // trailing the downbeat.
     setTimeout(() => {
-      onVideos.forEach((v) => { v.currentTime = 0; });
+      reanchorTakes();
       keepTakesOnTheAudioLoop();
     }, START_LOOKAHEAD * 1000);
 
@@ -278,10 +307,11 @@ async function beginLoops() {
   }
 }
 
-// Left to their own `loop` attribute the takes wander off the beat — measured
-// at roughly 95ms per pass, and they never come back, so after a few minutes
-// the picture has nothing to do with what you're hearing. Two obvious fixes
-// both fail here:
+// The takes don't carry the browser's native `loop` attribute (see the
+// on-video markup) — left to it, Chromium restarts a take up to ~95ms
+// before the duration it reports, an internal heuristic with no idea where
+// the audio actually is, and that showed up as the picture visibly running
+// ahead of the beat. Two other fixes were tried and both failed:
 //
 //   - Correcting by seeking to the audio's current phase. These takes carry a
 //     single keyframe, so any non-zero seek decodes from the top: a seek to 0
@@ -292,10 +322,22 @@ async function beginLoops() {
 //     shorter than the duration it reports, so the ratio is not knowable up
 //     front, and a duration-derived rate made the drift ten times worse.
 //
-// What is cheap is seeking to zero. So the takes are re-anchored there each
-// time the audio loop turns over, which is both the one seek the format is
-// fast at and the moment a small discontinuity is least visible. Drift can no
-// longer accumulate: it resets every pass instead of compounding.
+// What is cheap is seeking to zero. So every take is re-anchored there and
+// resumed the moment the audio loop turns over, which is both the one seek
+// the format is fast at and the moment a small discontinuity is least
+// visible. With the native attribute gone, that's now the only thing that
+// ever restarts a take, so it can no longer run ahead on its own — the poll
+// below is what it's waiting on, so it runs every 20ms rather than 100 to
+// keep that wait short enough not to read as a stutter. `ended` is a second,
+// per-take trigger for the same reset, for the rare case a take reaches its
+// own last frame and pauses before the next poll.
+function reanchorTakes() {
+  onVideos.forEach((v) => {
+    if (v.readyState >= 2) v.currentTime = 0;
+    v.play().catch(() => {});
+  });
+}
+
 function keepTakesOnTheAudioLoop() {
   let lastPhase = 0;
 
@@ -306,13 +348,16 @@ function keepTakesOnTheAudioLoop() {
     if (elapsed < 0) return;
 
     const phase = elapsed % loopDuration;
-    if (phase < lastPhase) {
-      onVideos.forEach((v) => {
-        if (v.readyState >= 2) v.currentTime = 0;
-      });
-    }
+    if (phase < lastPhase) reanchorTakes();
     lastPhase = phase;
-  }, 100);
+  }, 20);
+
+  onVideos.forEach((v) => {
+    v.addEventListener("ended", () => {
+      v.currentTime = 0;
+      v.play().catch(() => {});
+    });
+  });
 }
 
 // Opens the session. Every video starts looping here — the idle takes
@@ -331,6 +376,27 @@ async function startSession() {
       v.play().catch(() => {});
     });
     startOverlay.classList.add("hidden");
+
+    // Not awaited: the room tone isn't on the critical path the way the
+    // four channels are, so it starts whenever its own decode finishes
+    // rather than holding up the video-visible moment above. That decode
+    // is usually well under way by the time Start is even clicked, but a
+    // channel could in principle be brought in before it resolves — so
+    // this only opens at the resting level if the mix is still empty by
+    // then; otherwise it leaves the gain at 0, exactly where setTileState
+    // will already have ramped it.
+    if (ambientBufferPromise) {
+      ambientBufferPromise.then((buffer) => {
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(ambientGain);
+        source.start();
+        if (!active.some(Boolean)) {
+          ambientGain.gain.setValueAtTime(AMBIENT_LEVEL, audioCtx.currentTime);
+        }
+      }).catch(() => {});
+    }
   } catch (err) {
     started = false;
     console.error("Failed to start session", err);

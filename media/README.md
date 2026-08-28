@@ -18,6 +18,14 @@ seeking or restarting). Downscaled from the supplied 1280x720 source to
 960x540 and re-encoded without audio (`-an`) as VP9/`.webm` and
 H.264/`.mp4`, same as the performance takes.
 
+`ambient.mp3` is a quiet room-tone loop, the mirror image of the
+psychedelic backdrop: it plays while the stage is empty and fades out
+the moment any channel is brought in, fading back in the moment the
+mix drops back to nothing. It runs through its own `GainNode`
+(`AMBIENT_LEVEL` in `app.js`, currently 0.35) on its own independent
+loop, not the phase-locked mix, so bringing channels in and out never
+touches it beyond that one gain ramp.
+
 `gradient-source.jpg` is the supplied background artwork. It is kept
 for reference only — nothing loads it. The page draws the background
 as a CSS gradient in `style.css` instead, which measures within ~1% of
@@ -34,9 +42,11 @@ the phase-lock described below.
 Each channel has two videos instead of one, sourced from separate
 "Played"/"Bored" takes filmed for this purpose — toggling a channel
 swaps which video is visible (a quick opacity crossfade) rather than
-dimming a single video. Both videos in a pair loop continuously and
-independently from Start, same as the audio; toggling never restarts
-either one. Source `.mov` files (1280x720) were downscaled to 640x360
+dimming a single video. The idle ("off") take loops continuously and
+independently from Start via its own `loop` attribute; the performance
+("on") take does not — see "How the video stays in sync" below for why.
+Toggling never restarts either one. Source `.mov` files (1280x720) were
+downscaled to 640x360
 and re-encoded without audio (the audio track lives only in the
 dedicated `.mp3` — see below) as both `.webm` (VP9) and `.mp4` (H.264)
 for browser compatibility.
@@ -70,6 +80,20 @@ other, which is why an earlier `.play()`-based approach drifted.
 Because playback goes through Web Audio, the page must be served over
 `http://` or `https://` (e.g. `python3 -m http.server`) — `fetch()`
 can't read local files under a `file://` origin in most browsers.
+
+## How the video stays in sync
+
+The idle take can just loop natively — nobody is watching it against a
+beat. The performance ("on") take can't: Chromium's native `loop`
+restarts a take up to ~95ms before the duration it actually reports, on
+its own internal heuristic with no idea where the audio is, and that
+was visible as the picture running ahead of the beat. So the `loop`
+attribute is dropped from the on-video markup entirely, and `app.js`
+(`keepTakesOnTheAudioLoop`) re-anchors every performance take to frame
+0 itself, on the instant the audio loop turns over — the one seek this
+single-keyframe format is cheap at (~10ms; a non-zero seek can run
+seconds). A performance take now only ever restarts on that signal, so
+it can no longer drift ahead on its own.
 
 ## Filenames
 
