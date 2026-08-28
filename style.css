@@ -104,7 +104,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  max-width: 1100px;
+  max-width: 1300px;
   margin: 0 auto;
   width: 100%;
 }
@@ -117,7 +117,11 @@ html, body {
   border-radius: 20px;
   aspect-ratio: 16 / 9;
   box-shadow: 0 0 0 2px var(--surface-line);
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.15s ease;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .screen[data-channel="drums"] { --accent: var(--orange); }
@@ -125,8 +129,17 @@ html, body {
 .screen[data-channel="bass"] { --accent: var(--purple); }
 .screen[data-channel="synths"] { --accent: var(--maroon); }
 
+.screen:hover {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
 .screen.active {
   box-shadow: 0 0 0 3px var(--accent), 0 0 26px -6px var(--accent);
+}
+
+.screen:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .loop-video {
@@ -136,6 +149,7 @@ html, body {
   height: 100%;
   object-fit: cover;
   transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
 .on-video {
@@ -150,47 +164,22 @@ html, body {
   opacity: 0;
 }
 
-.button-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  max-width: 1100px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.toggle-btn {
-  --accent: var(--gold);
+.screen-label {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
   font-family: "Baloo 2", "Poppins", sans-serif;
   font-weight: 700;
-  padding: 0.7em 0.5em;
-  border-radius: 999px;
-  border: 2px solid var(--accent);
-  background: transparent;
+  font-size: 0.85rem;
   color: var(--accent);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.toggle-btn[data-channel="drums"] { --accent: var(--orange); }
-.toggle-btn[data-channel="guitars"] { --accent: var(--gold); }
-.toggle-btn[data-channel="bass"] { --accent: var(--purple); }
-.toggle-btn[data-channel="synths"] { --accent: var(--maroon); }
-
-.toggle-btn.active {
-  background: var(--accent);
-  color: var(--ink);
-}
-
-.toggle-btn:hover {
-  background: var(--accent);
-  color: var(--ink);
+  background: rgba(23, 19, 15, 0.62);
+  padding: 0.25em 0.7em;
+  border-radius: 999px;
+  pointer-events: none;
 }
 
 @media (max-width: 640px) {
-  .video-row,
-  .button-row {
+  .video-row {
     grid-template-columns: repeat(2, 1fr);
   }
 }

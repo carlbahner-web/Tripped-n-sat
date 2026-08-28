@@ -1,7 +1,6 @@
 const videos = Array.from(document.querySelectorAll(".loop-video"));
 const audios = Array.from(document.querySelectorAll(".loop-audio"));
 const screens = Array.from(document.querySelectorAll(".screen"));
-const toggleBtns = Array.from(document.querySelectorAll(".toggle-btn"));
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
 const jumpscareCat = document.getElementById("jumpscare-cat");
@@ -46,7 +45,7 @@ const bufferPromises = audios.map((a) =>
 function setTileState(index, isActive) {
   active[index] = isActive;
   screens[index].classList.toggle("active", isActive);
-  toggleBtns[index].classList.toggle("active", isActive);
+  screens[index].setAttribute("aria-pressed", String(isActive));
   const g = gains[index].gain;
   const now = audioCtx.currentTime;
   g.cancelScheduledValues(now);
@@ -99,9 +98,9 @@ async function startSession() {
 
 startBtn.addEventListener("click", startSession);
 
-toggleBtns.forEach((btn) => {
-  const index = Number(btn.dataset.index);
-  btn.addEventListener("click", () => {
+screens.forEach((screen) => {
+  const index = Number(screen.dataset.index);
+  screen.addEventListener("click", () => {
     if (!started) startSession();
     setTileState(index, !active[index]);
   });
