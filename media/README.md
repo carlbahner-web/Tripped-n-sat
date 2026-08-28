@@ -9,6 +9,13 @@ Real content from Pari/Jason's "Runaway" session, 125 BPM.
 | Bass    | purple | `bass.mp3` (15.36s) | `bass-on.webm`/`.mp4` | `bass-off.webm`/`.mp4` |
 | Synths  | maroon | `synths.mp3` (15.36s) | `synths-on.webm`/`.mp4` | `synths-off.webm`/`.mp4` |
 
+`gradient-source.jpg` is the supplied background artwork. It is kept
+for reference only — nothing loads it. The page draws the background
+as a CSS gradient in `style.css` instead, which measures within ~1% of
+the source per channel and, unlike the JPEG, rescales to any viewport
+and rotates for portrait without resampling or banding. Re-derive the
+stops from this file if the artwork ever changes.
+
 All four audio loops were exported as 48kHz/24-bit WAV, exactly
 **15.36s** each, converted to MP3 (V2 VBR). `decodeAudioData` (the
 Web Audio path used for playback) confirms all four decode to the

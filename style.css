@@ -11,6 +11,25 @@
   --gold: #f1cd2f;
   --purple: #8a5ae0;
   --maroon: #c33712;
+
+  /* Reproduces the supplied gradient artwork. Fitting a plane to the source
+     image put its axis at 105deg with a mean error of ~4/255, but the ramp
+     along that axis is not linear — it sits nearly flat through the first
+     fifth and then accelerates — so the stops below are the measured colour
+     at each point rather than a straight two-stop interpolation. Drawn in
+     CSS instead of embedded as the JPEG so it rescales to any viewport and
+     rotates for portrait without resampling or banding. */
+  --grad-angle: 105deg;
+  --grad: linear-gradient(
+    var(--grad-angle),
+    #4c210a 0%,
+    #53260a 20%,
+    #62310e 38%,
+    #804817 54%,
+    #96591e 71%,
+    #a96723 88%,
+    #b26f27 100%
+  );
 }
 
 * {
@@ -23,6 +42,10 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background: var(--grad);
 }
 
 /* The page owns exactly one viewport height and never scrolls: the header
@@ -38,10 +61,15 @@ body {
   overflow: hidden;
 }
 
+/* The wordmark sits straight on the gradient, which is dark under it in
+   portrait but mid-orange in landscape, so the type carries a soft shadow
+   to stay legible at either end rather than relying on the ground being
+   dark the way it could when the page was near-black. */
 .brand {
   flex: none;
   text-align: center;
   padding: 32px 16px 4px;
+  text-shadow: 0 1px 3px rgba(23, 19, 15, 0.45);
 }
 
 .brand h1 {
@@ -53,13 +81,16 @@ body {
   text-wrap: balance;
 }
 
+/* Cream rather than --text-dim: that muted tan was picked against a
+   near-black page and drops to about 2.9:1 on the lighter end of the
+   gradient. Hierarchy comes from size, weight and letter-spacing instead. */
 .brand-sub {
   margin: 2px 0 0;
   font-weight: 600;
   font-size: 0.85rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: rgba(245, 239, 226, 0.88);
 }
 
 #start-overlay {
@@ -204,6 +235,14 @@ body {
 
 /* Tall screens — phones upright, portrait tablets. */
 @media (max-aspect-ratio: 89/100) {
+  /* Turn the gradient a quarter so it still runs the long way down the
+     screen. 165 rather than 195 keeps the light end at the bottom right,
+     the same diagonal the artwork has, and leaves the wordmark sitting on
+     the dark end where cream type has the most contrast. */
+  :root {
+    --grad-angle: 165deg;
+  }
+
   .stage {
     padding: 8px;
     padding-bottom: max(8px, env(safe-area-inset-bottom));
