@@ -6,6 +6,7 @@ const screens = Array.from(document.querySelectorAll(".screen"));
 const faders = Array.from(document.querySelectorAll(".volume"));
 const channelEls = Array.from(document.querySelectorAll(".channel"));
 const videoRow = document.querySelector(".video-row");
+const bgLoop = document.querySelector(".bg-loop");
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
 
@@ -202,7 +203,19 @@ function setTileState(index, isActive) {
   // .screen's own .active state, since with all four active every .screen
   // is active anyway — this is just the one flag CSS needs to show all four
   // glows together instead of each tile deciding for itself.
-  videoRow.classList.toggle("all-active", active.every(Boolean));
+  const allActive = active.every(Boolean);
+  videoRow.classList.toggle("all-active", allActive);
+
+  // The psychedelic backdrop is the same "whole band" payoff as the glow,
+  // just staged behind the page instead of on the tiles, so it's gated by
+  // the same condition. It runs on its own clock — it isn't part of the
+  // phase-locked mix — so bringing it in is just a play/pause, paused
+  // rather than reset when it drops so it picks back up where it left off.
+  if (bgLoop && !REDUCE_MOTION) {
+    document.body.classList.toggle("all-active", allActive);
+    if (allActive) bgLoop.play().catch(() => {});
+    else bgLoop.pause();
+  }
 }
 
 // Starts the song. Runs once, on the first channel brought in — every later

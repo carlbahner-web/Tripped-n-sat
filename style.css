@@ -67,6 +67,8 @@ body {
    dark the way it could when the page was near-black. */
 .brand {
   flex: none;
+  position: relative;
+  z-index: 1;
   text-align: center;
   padding: 32px 16px 4px;
   text-shadow: 0 1px 3px rgba(23, 19, 15, 0.45);
@@ -156,6 +158,8 @@ body {
 .stage {
   flex: 1;
   min-height: 0;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -274,6 +278,31 @@ body {
    one class is sufficient to show all four glows together. */
 .video-row.all-active .glow {
   opacity: 1;
+}
+
+/* The same "whole band" payoff as the glow, staged behind the page instead
+   of on the tiles. <html> carries its own solid --bg, so body's gradient
+   paints as body's own box rather than propagating to the canvas -- which
+   means a plain negative z-index wouldn't clear it, since a non-positioned
+   sibling's background still outranks a positioned descendant with
+   z-index < 0. Giving .brand and .stage z-index:1 (below) settles it
+   explicitly instead of fighting that propagation edge case. Muted and
+   looped in the markup; app.js only starts and stops it, in step with
+   .all-active. */
+.bg-loop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.1s ease;
+}
+
+body.all-active .bg-loop {
+  opacity: 0.85;
 }
 
 /* The fader strip: a recessed panel with a travel scale marked down one
@@ -491,6 +520,10 @@ body {
    rule above, so an active channel stays visibly marked either way. */
 @media (prefers-reduced-motion: reduce) {
   .glow {
+    display: none;
+  }
+
+  .bg-loop {
     display: none;
   }
 }

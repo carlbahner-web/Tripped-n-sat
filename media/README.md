@@ -9,6 +9,15 @@ Real content from Pari/Jason's "Runaway" session, 125 BPM.
 | Bass    | purple | `bass.mp3` (15.36s) | `bass-on.webm`/`.mp4` | `bass-off.webm`/`.mp4` |
 | Synths  | maroon | `synths.mp3` (15.36s) | `synths-on.webm`/`.mp4` | `synths-off.webm`/`.mp4` |
 
+`bg-loop.webm`/`.mp4` is a psychedelic backdrop shown full-bleed behind
+the page — the same "whole band" payoff as the glow around the tiles,
+just staged behind them instead of on them. It fades in only while all
+four channels are active at once and runs on its own clock (it is not
+part of the phase-locked audio mix, so it just plays/pauses rather than
+seeking or restarting). Downscaled from the supplied 1280x720 source to
+960x540 and re-encoded without audio (`-an`) as VP9/`.webm` and
+H.264/`.mp4`, same as the performance takes.
+
 `gradient-source.jpg` is the supplied background artwork. It is kept
 for reference only — nothing loads it. The page draws the background
 as a CSS gradient in `style.css` instead, which measures within ~1% of
