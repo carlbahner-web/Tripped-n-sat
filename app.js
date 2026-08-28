@@ -3,11 +3,16 @@ const onVideos = Array.from(document.querySelectorAll(".on-video"));
 const videos = [...offVideos, ...onVideos];
 const audios = Array.from(document.querySelectorAll(".loop-audio"));
 const screens = Array.from(document.querySelectorAll(".screen"));
+const faders = Array.from(document.querySelectorAll(".volume"));
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
 const jumpscareCat = document.getElementById("jumpscare-cat");
 
 const active = [false, false, false, false];
+// Each channel's own level, independent of whether it is currently in the
+// mix. Set a fader while a channel is out and the level is waiting for it
+// when you bring it back in.
+const levels = faders.map((f) => Number(f.value));
 let started = false;
 
 // The song is deliberately not running yet when the session opens. The idle
@@ -66,20 +71,25 @@ const bufferPromises = audios.map((a) =>
   loadAudioBytes(a.currentSrc || a.src).then((buf) => audioCtx.decodeAudioData(buf))
 );
 
-function setTileState(index, isActive) {
-  active[index] = isActive;
-  screens[index].classList.toggle("active", isActive);
-  screens[index].setAttribute("aria-pressed", String(isActive));
-
-  // Ramped rather than switched, to avoid a click. On the very first
-  // activation this runs before the song has actually started, which is
-  // what we want: the gain is already at 1 by the time the first sample
-  // plays, so the loop opens at full volume instead of fading up into it.
+// A channel is audible at its own level only while it is in the mix, so the
+// toggle and the fader both resolve through here. Ramped rather than
+// switched, to avoid a click. On the very first activation this runs before
+// the song has actually started, which is what we want: the gain is already
+// up by the time the first sample plays, so the loop opens at its level
+// instead of fading up into its own first bar.
+function applyLevel(index, seconds = 0.03) {
   const g = gains[index].gain;
   const now = audioCtx.currentTime;
   g.cancelScheduledValues(now);
   g.setValueAtTime(g.value, now);
-  g.linearRampToValueAtTime(isActive ? 1 : 0, now + 0.03);
+  g.linearRampToValueAtTime(active[index] ? levels[index] : 0, now + seconds);
+}
+
+function setTileState(index, isActive) {
+  active[index] = isActive;
+  screens[index].classList.toggle("active", isActive);
+  screens[index].setAttribute("aria-pressed", String(isActive));
+  applyLevel(index);
 
   jumpscareCat.classList.toggle("active", active.every(Boolean));
 }
@@ -204,4 +214,30 @@ screens.forEach((screen) => {
     if (next) beginLoops();
     setTileState(index, next);
   });
+});
+
+// Chromium can't style the filled part of a range on its own, so the track
+// is painted from a gradient that reads this.
+function paintFader(fader) {
+  fader.style.setProperty("--fill", `${Number(fader.value) * 100}%`);
+}
+
+faders.forEach((fader) => {
+  const index = Number(fader.dataset.index);
+  paintFader(fader);
+
+  fader.addEventListener("input", () => {
+    levels[index] = Number(fader.value);
+    paintFader(fader);
+    // Follow the finger closely while dragging — a 30ms ramp per input event
+    // would lag audibly behind a fast move — but still ramp rather than jump,
+    // so a drag doesn't crackle.
+    applyLevel(index, 0.012);
+  });
+
+  // The fader sits on top of its tile, so keep taps and drags on it from
+  // reaching the tile underneath and toggling the channel.
+  ["pointerdown", "click"].forEach((type) =>
+    fader.addEventListener(type, (e) => e.stopPropagation())
+  );
 });

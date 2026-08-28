@@ -13,7 +13,8 @@
 
 <div id="start-overlay">
   <button id="start-btn">[ Start Session ]</button>
-  <p>Brings all four in sync — muted and idle until you bring each one in. Toggling never restarts a loop.</p>
+  <p>The band sits idle until you bring someone in. Tap a player to add their part, tap again to drop it — the loop never restarts, so any combination stays locked together.</p>
+  <p class="silent-note">Heads up: if you can’t hear anything, check your ringer&nbsp;/ silent switch.</p>
 </div>
 
 <header class="brand">
@@ -23,7 +24,8 @@
 
 <main class="stage">
   <div class="video-row">
-    <button class="screen" type="button" data-index="0" data-channel="drums" aria-pressed="false" aria-label="Drums">
+    <div class="channel" data-channel="drums">
+      <button class="screen" type="button" data-index="0" aria-pressed="false" aria-label="Drums">
       <video class="loop-video off-video" data-index="0" muted loop playsinline>
         <source src="media/drums-off.webm" type="video/webm">
         <source src="media/drums-off.mp4" type="video/mp4">
@@ -33,7 +35,11 @@
         <source src="media/drums-on.mp4" type="video/mp4">
       </video>
     </button>
-    <button class="screen" type="button" data-index="1" data-channel="guitars" aria-pressed="false" aria-label="Guitars">
+      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+             data-index="0" aria-label="Drums volume">
+    </div>
+    <div class="channel" data-channel="guitars">
+      <button class="screen" type="button" data-index="1" aria-pressed="false" aria-label="Guitars">
       <video class="loop-video off-video" data-index="1" muted loop playsinline>
         <source src="media/guitars-off.webm" type="video/webm">
         <source src="media/guitars-off.mp4" type="video/mp4">
@@ -43,7 +49,11 @@
         <source src="media/guitars-on.mp4" type="video/mp4">
       </video>
     </button>
-    <button class="screen" type="button" data-index="2" data-channel="bass" aria-pressed="false" aria-label="Bass">
+      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+             data-index="1" aria-label="Guitars volume">
+    </div>
+    <div class="channel" data-channel="bass">
+      <button class="screen" type="button" data-index="2" aria-pressed="false" aria-label="Bass">
       <video class="loop-video off-video" data-index="2" muted loop playsinline>
         <source src="media/bass-off.webm" type="video/webm">
         <source src="media/bass-off.mp4" type="video/mp4">
@@ -53,7 +63,11 @@
         <source src="media/bass-on.mp4" type="video/mp4">
       </video>
     </button>
-    <button class="screen" type="button" data-index="3" data-channel="synths" aria-pressed="false" aria-label="Synths">
+      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+             data-index="2" aria-label="Bass volume">
+    </div>
+    <div class="channel" data-channel="synths">
+      <button class="screen" type="button" data-index="3" aria-pressed="false" aria-label="Synths">
       <video class="loop-video off-video" data-index="3" muted loop playsinline>
         <source src="media/synths-off.webm" type="video/webm">
         <source src="media/synths-off.mp4" type="video/mp4">
@@ -63,6 +77,9 @@
         <source src="media/synths-on.mp4" type="video/mp4">
       </video>
     </button>
+      <input class="volume" type="range" min="0" max="1" step="0.01" value="1"
+             data-index="3" aria-label="Synths volume">
+    </div>
   </div>
 
   <audio class="loop-audio" data-index="0" src="media/drums.mp3"></audio>
