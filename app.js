@@ -4,6 +4,7 @@ const videos = [...offVideos, ...onVideos];
 const audios = Array.from(document.querySelectorAll(".loop-audio"));
 const screens = Array.from(document.querySelectorAll(".screen"));
 const faders = Array.from(document.querySelectorAll(".volume"));
+const channelEls = Array.from(document.querySelectorAll(".channel"));
 const startOverlay = document.getElementById("start-overlay");
 const startBtn = document.getElementById("start-btn");
 
@@ -70,6 +71,109 @@ const bufferPromises = audios.map((a) =>
   loadAudioBytes(a.currentSrc || a.src).then((buf) => audioCtx.decodeAudioData(buf))
 );
 
+// --- Audio-reactive glow --------------------------------------------------
+//
+// Each tile's border blooms outward in time with that channel's OWN audio,
+// never a combined "master" signal — with all four channels in the mix,
+// each tile still visibly follows its own part rather than one shared pulse.
+//
+// The loudness curve is computed once, right after a channel's buffer is
+// available, rather than analysed live every frame. The loop repeats an
+// identical waveform forever, so live analysis would only ever rediscover
+// what's already fully knowable up front, and precomputing turns the
+// per-frame cost into a single array lookup instead of continuous FFT work
+// on four channels at once.
+const REDUCE_MOTION = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Per-channel attack/release, in ms. Attack is fast everywhere so a hit
+// registers instantly; release is what gives each instrument its own
+// character on screen — short for the percussive channels so consecutive
+// hits stay visually distinct, longer for the more sustained ones so the
+// glow doesn't flicker between notes. Tune these by ear once it's running.
+const GLOW_SHAPE = [
+  { attackMs: 4, releaseMs: 130 }, // 0 drums
+  { attackMs: 6, releaseMs: 190 }, // 1 guitars
+  { attackMs: 8, releaseMs: 260 }, // 2 bass
+  { attackMs: 8, releaseMs: 260 }, // 3 synths
+];
+
+let envelopes = [];
+
+function averageChannels(buffer) {
+  if (buffer.numberOfChannels === 1) return buffer.getChannelData(0);
+  const a = buffer.getChannelData(0);
+  const b = buffer.getChannelData(1);
+  const mono = new Float32Array(a.length);
+  for (let i = 0; i < a.length; i++) mono[i] = (a[i] + b[i]) * 0.5;
+  return mono;
+}
+
+// One value per ~11.6ms window (512 samples at 44.1kHz) — comfortably finer
+// than a single video frame, while keeping the array small (~1300 points
+// for this 15.36s loop).
+function computeEnvelope(buffer, { attackMs, releaseMs }) {
+  const HOP = 512;
+  const data = averageChannels(buffer);
+  const hops = Math.ceil(data.length / HOP);
+  const raw = new Float32Array(hops);
+
+  for (let i = 0; i < hops; i++) {
+    const start = i * HOP;
+    const end = Math.min(start + HOP, data.length);
+    let sumSquares = 0;
+    for (let j = start; j < end; j++) sumSquares += data[j] * data[j];
+    raw[i] = Math.sqrt(sumSquares / (end - start));
+  }
+
+  const dt = HOP / buffer.sampleRate;
+  const attackCoeff = 1 - Math.exp(-dt / (attackMs / 1000));
+  const releaseCoeff = 1 - Math.exp(-dt / (releaseMs / 1000));
+
+  // Shaped in two passes around the loop rather than one from a standing
+  // start: playback picks back up at index 0 on every single repeat, so the
+  // shaping needs to already be mid-stride there. A single pass would open
+  // with an artificial swell that never recurs on any later loop.
+  const shaped = new Float32Array(hops);
+  let level = raw[hops - 1];
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < hops; i++) {
+      const coeff = raw[i] > level ? attackCoeff : releaseCoeff;
+      level += (raw[i] - level) * coeff;
+      shaped[i] = level;
+    }
+  }
+
+  let peak = 0;
+  for (let i = 0; i < hops; i++) if (shaped[i] > peak) peak = shaped[i];
+  if (peak > 0) for (let i = 0; i < hops; i++) shaped[i] /= peak;
+
+  return { values: shaped, dt };
+}
+
+function envelopeValueAt(envelope, phaseSeconds) {
+  const { values, dt } = envelope;
+  const pos = phaseSeconds / dt;
+  const i0 = Math.floor(pos) % values.length;
+  const i1 = (i0 + 1) % values.length;
+  const t = pos - Math.floor(pos);
+  return values[i0] * (1 - t) + values[i1] * t;
+}
+
+function tickGlow() {
+  if (loopsRunning && loopDuration && envelopes.length) {
+    const elapsed = audioCtx.currentTime - loopStartedAt;
+    if (elapsed >= 0) {
+      const phase = elapsed % loopDuration;
+      envelopes.forEach((env, i) => {
+        if (env) channelEls[i].style.setProperty("--glow", envelopeValueAt(env, phase).toFixed(3));
+      });
+    }
+  }
+  requestAnimationFrame(tickGlow);
+}
+
+if (!REDUCE_MOTION) requestAnimationFrame(tickGlow);
+
 // A channel is audible at its own level only while it is in the mix, so the
 // toggle and the fader both resolve through here. Ramped rather than
 // switched, to avoid a click. On the very first activation this runs before
@@ -123,7 +227,10 @@ async function beginLoops() {
     // Video has no equivalent "start at this exact future instant" API, so
     // it's delayed with setTimeout instead — otherwise it would start
     // immediately while audio is still waiting out its scheduling
-    // lookahead, leaving video visibly ahead of the beat.
+    // lookahead, leaving video visibly ahead of the beat. setTimeout's delay
+    // counts from the moment it's called, so this line has to run right
+    // after scheduling with nothing synchronous between them — envelope
+    // computation below waits until after, precisely to avoid delaying it.
     // The performance takes have been rolling invisibly since Start, so all
     // that happens here is a seek back to their first frame — they restart
     // from the top alongside the audio. They are deliberately not started
@@ -135,6 +242,13 @@ async function beginLoops() {
       onVideos.forEach((v) => { v.currentTime = 0; });
       keepTakesOnTheAudioLoop();
     }, START_LOOKAHEAD * 1000);
+
+    // Not time-critical, unlike everything above: every source is already
+    // scheduled for a fixed future instant regardless of when this runs, and
+    // the setTimeout just above is already registered.
+    if (!REDUCE_MOTION) {
+      envelopes = buffers.map((buffer, i) => computeEnvelope(buffer, GLOW_SHAPE[i]));
+    }
   } catch (err) {
     loopsRunning = false;
     console.error("Failed to start the loops", err);

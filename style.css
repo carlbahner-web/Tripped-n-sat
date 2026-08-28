@@ -208,10 +208,22 @@ body {
 .channel[data-channel="bass"] { --accent: var(--purple); }
 .channel[data-channel="synths"] { --accent: var(--maroon); }
 
-.screen {
+/* .screen keeps overflow:hidden to clip its two <video> children to the
+   rounded corners, which means a box-shadow on anything INSIDE .screen
+   would be clipped along with them. The audio-reactive bloom needs to
+   bleed past that edge, so it lives on .glow, a sibling underneath rather
+   than a descendant -- .picture is the actual grid item now, sized to the
+   channel's second column, with .screen and .glow both filling it. */
+.picture {
   position: relative;
   min-width: 0;
   min-height: 0;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   overflow: hidden;
   background: var(--surface);
   border-radius: 20px;
@@ -234,6 +246,30 @@ body {
 .screen:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
+}
+
+/* The audio-reactive glow. --glow (0-1) is written every frame from the
+   channel's own precomputed loudness envelope -- see app.js -- so this
+   never animates on a CSS transition, which would just add lag on top of
+   shaping that already happened once, offline, in JS. It's gated purely in
+   CSS off .screen's existing .active class via the sibling selector, so
+   nothing extra needs toggling from script when a channel comes in or out.
+   .screen paints on top (z-index 1) and fully covers .glow's own box, so
+   only the part of the shadow bleeding past the shared edge is visible --
+   which reads as the tile's own border blooming outward with the music. */
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 calc(4px + var(--glow, 0) * 52px) calc(-3px + var(--glow, 0) * 15px) var(--accent);
+  transition: opacity 0.15s ease;
+}
+
+.screen.active ~ .glow {
+  opacity: 1;
 }
 
 /* The fader strip: a recessed panel with a travel scale marked down one
@@ -426,7 +462,8 @@ body {
     gap: 6px;
   }
 
-  .screen {
+  .screen,
+  .glow {
     border-radius: 14px;
   }
 }
@@ -441,6 +478,16 @@ body {
   .video-row {
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: 1fr;
+  }
+}
+
+/* The bloom pulses several times a second on a busy part -- not covered by
+   a CSS transition since app.js skips driving it here at all, but the ring
+   itself is still shown at a flat, non-pulsing intensity via .glow's opacity
+   rule above, so an active channel stays visibly marked either way. */
+@media (prefers-reduced-motion: reduce) {
+  .glow {
+    display: none;
   }
 }
 
