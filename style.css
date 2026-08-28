@@ -467,10 +467,9 @@ body.all-active .bg-loop {
    frame, wall), the "on" take sits about 1.5px left of the "off" take at
    its native 640px encode width. Everywhere else the two takes already
    line up. A small translate (in %, so it scales with the tile rather
-   than a fixed px) nudges it back into place; the slight scale keeps that
-   nudge from ever uncovering an edge. */
+   than a fixed px) nudges it back into place. */
 .channel[data-channel="drums"] .on-video {
-  transform: scale(1.01) translateX(0.25%);
+  transform: translateX(0.25%);
 }
 
 /* Which of the three arrangements wins is a function of the viewport's
