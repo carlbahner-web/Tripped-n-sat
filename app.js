@@ -44,13 +44,26 @@ const gains = audios.map(() => {
   return g;
 });
 
+// Served from a file the page fetches; in the self-contained build the loops
+// are inlined as data: URIs instead, where there is no request to make and a
+// locked-down connect-src would block fetch() from reading them anyway. Both
+// end up as an ArrayBuffer.
+function loadAudioBytes(src) {
+  if (src.startsWith("data:")) {
+    const base64 = src.slice(src.indexOf(",") + 1);
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return Promise.resolve(bytes.buffer);
+  }
+  return fetch(src).then((res) => res.arrayBuffer());
+}
+
 // Decoding doesn't require a user gesture (only starting playback does), so
 // kick it off immediately at load time — by the time a channel is brought in
 // the buffers are already decoded and the song can start with no delay.
 const bufferPromises = audios.map((a) =>
-  fetch(a.currentSrc || a.src)
-    .then((res) => res.arrayBuffer())
-    .then((buf) => audioCtx.decodeAudioData(buf))
+  loadAudioBytes(a.currentSrc || a.src).then((buf) => audioCtx.decodeAudioData(buf))
 );
 
 function setTileState(index, isActive) {
