@@ -164,20 +164,6 @@ html, body {
   opacity: 0;
 }
 
-.screen-label {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  font-family: "Baloo 2", "Poppins", sans-serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--accent);
-  background: rgba(23, 19, 15, 0.62);
-  padding: 0.25em 0.7em;
-  border-radius: 999px;
-  pointer-events: none;
-}
-
 @media (max-width: 640px) {
   .video-row {
     grid-template-columns: repeat(2, 1fr);
