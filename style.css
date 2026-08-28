@@ -20,13 +20,26 @@
 html, body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* The page owns exactly one viewport height and never scrolls: the header
+   takes what it needs and the stage claims everything left over, so the
+   video grid can size itself against real available space instead of a
+   fixed aspect ratio. dvh (not vh) so mobile browser chrome retracting
+   doesn't leave the last tile cut off. */
+body {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .brand {
+  flex: none;
   text-align: center;
   padding: 32px 16px 4px;
 }
@@ -91,13 +104,15 @@ html, body {
 }
 
 .stage {
-  min-height: 100vh;
-  width: 100vw;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 12px;
   padding: 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 .video-row {
@@ -164,9 +179,60 @@ html, body {
   opacity: 0;
 }
 
-@media (max-width: 640px) {
+/* Tall screens (phones upright, portrait tablets) stack into one column of
+   four, each tile taking an equal share of whatever height is left rather
+   than deriving its height from its width — that's the difference between
+   covering ~a quarter of the screen and ~85% of it.
+
+   The switch keys off viewport aspect ratio, not width: laying four 16/9
+   tiles into a container of aspect R gives each tile R/4 as a row, R as a
+   2x2, and R*4 as a column. Solving each against 16/9 and taking the
+   geometric-mean crossovers puts the column/2x2 boundary near 0.89, which
+   correctly catches a portrait tablet (~0.69) that a width breakpoint
+   would have missed. Tiles come out wider than 16/9, so object-fit: cover
+   trims the top and bottom of each frame and leaves the subject — who is
+   centered horizontally — intact. */
+@media (max-aspect-ratio: 89/100) {
+  .stage {
+    padding: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
   .video-row {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+    flex: 1;
+    min-height: 0;
+    gap: 6px;
+  }
+
+  .screen {
+    aspect-ratio: auto;
+    min-height: 0;
+    border-radius: 14px;
+  }
+
+  /* The trim comes off the top and bottom; the players' heads sit in the
+     upper third and the floor is the least interesting part of the frame,
+     so bias the visible window upward instead of centering it. */
+  .loop-video {
+    object-position: center 38%;
+  }
+}
+
+/* Compact the wordmark on small screens so it costs the video less height. */
+@media (max-width: 640px) {
+  .brand {
+    padding: 10px 12px 2px;
+  }
+
+  .brand h1 {
+    font-size: 1.6rem;
+  }
+
+  .brand-sub {
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
   }
 }
 
