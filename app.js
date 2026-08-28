@@ -330,10 +330,14 @@ async function beginLoops() {
 // below is what it's waiting on, so it runs every 20ms rather than 100 to
 // keep that wait short enough not to read as a stutter. `ended` is a second,
 // per-take trigger for the same reset, for the rare case a take reaches its
-// own last frame and pauses before the next poll.
+// own last frame and pauses before the next poll. The seek itself is
+// skipped when a take is already sitting on frame 0 (the first-activation
+// path above pre-seeks the newly toggled take for exactly this reason) --
+// re-seeking to the same position still drops readyState while it
+// resettles, and by then the take is the one actually on screen.
 function reanchorTakes() {
   onVideos.forEach((v) => {
-    if (v.readyState >= 2) v.currentTime = 0;
+    if (v.readyState >= 2 && v.currentTime > 0.01) v.currentTime = 0;
     v.play().catch(() => {});
   });
 }
@@ -411,6 +415,22 @@ screens.forEach((screen) => {
   screen.addEventListener("click", () => {
     if (!started) startSession();
     const next = !active[index];
+
+    // On the very first activation, beginLoops() won't reach its own
+    // reanchor until START_LOOKAHEAD out — which lands mid-crossfade, right
+    // as this tile's take is fading into view. Seeking a take, even to 0,
+    // briefly drops its readyState while the seek settles, and that's what
+    // was showing through as a black flash. Doing that seek right now
+    // instead, before the crossfade below has even started, keeps it well
+    // clear of the reveal; pausing afterward holds the take on that frame
+    // rather than letting it run ahead of the audio's own lookahead, and
+    // reanchorTakes() resumes it exactly when playback is meant to begin.
+    if (next && !loopsRunning) {
+      const take = onVideos[index];
+      if (take.readyState >= 2) take.currentTime = 0;
+      take.pause();
+    }
+
     if (next) beginLoops();
     setTileState(index, next);
   });
